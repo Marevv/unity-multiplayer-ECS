@@ -299,7 +299,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cd691c7371589d34db37c679386b93ce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _listenIP: 127.0.0.1
+  _listenIP: 0.0.0.0
   _connectIP: 127.0.0.1
   _port: 7979
   ipInputField: {fileID: 1374753645}

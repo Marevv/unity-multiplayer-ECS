@@ -15,12 +15,9 @@ using UnityEngine.UI;
 public class ConnectionManager : MonoBehaviour
 {
     
-    [SerializeField] private string _listenIP = "127.0.0.1";
     [SerializeField] private string _connectIP = "127.0.0.1";
     [SerializeField] private ushort _port = 7979;
-
-    private const string localhost = "127.0.0.1";
-    private const ushort defaultPort = 7979;
+    private string _listenIP = "0.0.0.0";
 
     public TMP_InputField ipInputField;
     public TMP_InputField portInputField;
@@ -78,15 +75,24 @@ public class ConnectionManager : MonoBehaviour
                     ClientServerBootstrap.RequestedPlayType == ClientServerBootstrap.PlayType.Server;
         _isClient = ClientServerBootstrap.RequestedPlayType == ClientServerBootstrap.PlayType.ClientAndServer ||
                     ClientServerBootstrap.RequestedPlayType == ClientServerBootstrap.PlayType.Client;
-        
-        if(_isServer)
+
+        if (_isServer)
+        {
+            Debug.Log("Connecting Server");
             Connect();
+        }
     }
 
     private void SetupConnection()
     {
-        _connectIP = ipInputField.text == "" ? localhost : ipInputField.text;
-        _port = portInputField.text == "" ? defaultPort : ushort.Parse(portInputField.text);
+        if (ipInputField.text == "" || portInputField.text == "")
+        {
+            Debug.Log("IP or Port not provided");
+            return;
+        }
+
+        _connectIP = ipInputField.text;
+        _port = ushort.Parse(portInputField.text);
         Connect();
     }
 
@@ -111,21 +117,17 @@ public class ConnectionManager : MonoBehaviour
         if (_isServer)
         {
             var args = Environment.GetCommandLineArgs();
-
+            
             for (var i = 0; i < args.Length; i++)
             {
-                if (args[i] == "-ip")
-                {
-                    _listenIP = args[i + 1];
-                    i++;
-                }
-                else if (args[i] == "-port")
+                if (args[i] == "-port")
                 {
                     _port = ushort.Parse(args[i + 1]);
-                    i++;
+                    Debug.Log($"Got this port from args: {_port}");
                     break;
                 }
             }
+            Debug.Log($"Listenning on IP: {_listenIP} and port: {_port}");
             
             using var query =
                 ServerWorld.EntityManager.CreateEntityQuery(ComponentType.ReadWrite<NetworkStreamDriver>());
@@ -134,9 +136,10 @@ public class ConnectionManager : MonoBehaviour
 
         if (_isClient)
         {
+            Debug.Log($"Connecting on IP: {_connectIP} and port: {_port}");
             using var query =
                 ClientWorld.EntityManager.CreateEntityQuery(ComponentType.ReadWrite<NetworkStreamDriver>());
-            query.GetSingletonRW<NetworkStreamDriver>().ValueRW.Connect(ClientWorld.EntityManager, NetworkEndpoint.Parse(_listenIP, _port));
+            query.GetSingletonRW<NetworkStreamDriver>().ValueRW.Connect(ClientWorld.EntityManager, NetworkEndpoint.Parse(_connectIP, _port));
         }
 
         _connecting = false;

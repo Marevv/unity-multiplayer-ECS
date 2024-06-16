@@ -8,7 +8,8 @@
 /[Bb]uild/
 /[Bb]uilds/
 /[Bb]uildsClients/
-/[Bb]uildsServer/
+/[Ww]indowsServer/
+/[Ll]inuxServer/
 /[Ll]ogs/
 /[Uu]ser[Ss]ettings/
 
