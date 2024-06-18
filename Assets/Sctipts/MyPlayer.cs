@@ -3,7 +3,7 @@ using Unity.Entities;
 using Unity.VisualScripting;
 
 
-public class Player : MonoBehaviour
+public class MyPlayer : MonoBehaviour
 {
     public float speed = 5f;
 }
@@ -14,9 +14,9 @@ public struct PlayerData : IComponentData
 }
 
 
-class PlayerBaker : Baker<Player>
+class PlayerBaker : Baker<MyPlayer>
 {
-    public override void Bake(Player authoring)
+    public override void Bake(MyPlayer authoring)
     {
         var entity = GetEntity(TransformUsageFlags.Dynamic);
         AddComponent(entity, new PlayerData()

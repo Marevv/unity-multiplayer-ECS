@@ -10,9 +10,9 @@ using UnityEngine.Serialization;
 
 public class PlayerAccounts : MonoBehaviour
 {
-    [SerializeField] private Button signInButton;
+    [SerializeField] private GameObject beforeLogInPanel;
     [SerializeField] private TMP_Text nameLabelText;
-    [SerializeField] private TMP_Text nameToChangeText;
+    [SerializeField] private TMP_InputField nameToChangeInputField;
     [SerializeField] private GameObject afterLogInPanel;
 
     private string _externalIds;
@@ -22,8 +22,10 @@ public class PlayerAccounts : MonoBehaviour
         await UnityServices.InitializeAsync();
         PlayerAccountService.Instance.SignedIn += SignInWithUnity;
     }
+    
+    
 
-    public async void StartSignInAsync()
+    public async void StartSignInAsync(bool anonymously)
     {
         if (PlayerAccountService.Instance.IsSignedIn)
         {
@@ -34,7 +36,11 @@ public class PlayerAccounts : MonoBehaviour
 
         try
         {
-            await PlayerAccountService.Instance.StartSignInAsync();
+            if(anonymously)
+                await AuthenticationService.Instance.SignInAnonymouslyAsync();
+            else
+                await PlayerAccountService.Instance.StartSignInAsync();
+            
             AfterSignIn();
         }
         catch (RequestFailedException ex)
@@ -45,7 +51,7 @@ public class PlayerAccounts : MonoBehaviour
 
     private async void AfterSignIn()
     {
-        signInButton.gameObject.SetActive(false);
+        beforeLogInPanel.SetActive(false);
         afterLogInPanel.SetActive(true);
         try
         {
@@ -66,14 +72,15 @@ public class PlayerAccounts : MonoBehaviour
 
     public async void ChangePlayerName()
     {
-        await AuthenticationService.Instance.UpdatePlayerNameAsync(nameToChangeText.text);
+        await AuthenticationService.Instance.UpdatePlayerNameAsync(nameToChangeInputField.text);
         nameLabelText.text = AuthenticationService.Instance.PlayerName;
+        nameToChangeInputField.text = "";
     }
 
     public void SignOut()
     {
         AuthenticationService.Instance.SignOut();
-        signInButton.gameObject.SetActive(true);
+        beforeLogInPanel.SetActive(true);
         afterLogInPanel.SetActive(false);
     }
 
