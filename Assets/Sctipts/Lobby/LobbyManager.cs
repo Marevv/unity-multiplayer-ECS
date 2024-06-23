@@ -149,7 +149,9 @@ public class LobbyManager : MonoBehaviour
                 {
                     if (!IsLobbyHost())
                     {
-                        RelayManager.Instance.JoinRelay(joinedLobby.Data[KEY_START_GAME].Value);
+                        Debug.Log("Joining relay with this code: "+ joinedLobby.Data[KEY_START_GAME].Value);
+                        await RelayManager.Instance.SetupClient(joinedLobby.Data[KEY_START_GAME].Value);
+                        ConnectionManager.Instance.UseRelay();
                     }
 
                     joinedLobby = null;
@@ -455,7 +457,8 @@ public class LobbyManager : MonoBehaviour
             {
                 Debug.Log(("StartGame"));
 
-                string relayCode = await RelayManager.Instance.CreateRelay();
+                string relayCode = await RelayManager.Instance.SetupHost();
+                await RelayManager.Instance.SetupClient(relayCode);
 
                 Lobby lobby = await Lobbies.Instance.UpdateLobbyAsync(joinedLobby.Id, new UpdateLobbyOptions
                 {
@@ -465,8 +468,9 @@ public class LobbyManager : MonoBehaviour
                     }
                 });
 
-
+                Debug.Log("Relay Created");
                 joinedLobby = lobby;
+                ConnectionManager.Instance.UseRelay();
             }
             catch (Exception e)
             {

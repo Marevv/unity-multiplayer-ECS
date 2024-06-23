@@ -1,11 +1,6 @@
 using Unity.Entities;
 using UnityEngine;
 
-public class PrefabsAuthoring : MonoBehaviour
-{
-    public GameObject unit;
-    public GameObject player;
-}
 
 public struct PrefabsData : IComponentData
 {
@@ -13,28 +8,33 @@ public struct PrefabsData : IComponentData
     public Entity player;
 }
 
-
-class PrefabsBaker : Baker<PrefabsAuthoring>
+public class PrefabsAuthoring : MonoBehaviour
 {
-    public override void Bake(PrefabsAuthoring authoring)
+    public GameObject unit;
+    public GameObject player;
+
+    public class Baker : Baker<PrefabsAuthoring>
     {
-        Entity unitPrefab = default;
-        Entity playerPrefab = default;
-        if (authoring.unit != null)
+        public override void Bake(PrefabsAuthoring authoring)
         {
-            unitPrefab = GetEntity(authoring.unit, TransformUsageFlags.Dynamic);
-        }
+            Entity unitPrefab = default;
+            Entity playerPrefab = default;
+            if (authoring.unit != null)
+            {
+                unitPrefab = GetEntity(authoring.unit, TransformUsageFlags.Dynamic);
+            }
 
-        if (authoring.player != null)
-        {
-            playerPrefab = GetEntity(authoring.player, TransformUsageFlags.Dynamic);
-        }
+            if (authoring.player != null)
+            {
+                playerPrefab = GetEntity(authoring.player, TransformUsageFlags.Dynamic);
+            }
 
-        var entity = GetEntity(TransformUsageFlags.Dynamic);
-        AddComponent(entity, new PrefabsData()
-        {
-            unit = unitPrefab,
-            player = playerPrefab
-        });
+            var entity = GetEntity(TransformUsageFlags.Dynamic);
+            AddComponent(entity, new PrefabsData()
+            {
+                unit = unitPrefab,
+                player = playerPrefab
+            });
+        }
     }
 }

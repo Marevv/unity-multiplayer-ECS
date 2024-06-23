@@ -41,10 +41,9 @@ public partial class ServerSystem : SystemBase
         
         foreach (var (request, command, entity) in SystemAPI.Query<RefRO<ReceiveRpcCommandRequest>, RefRO<SpawnUnityRpcCommand>>().WithEntityAccess())
         {
-            PrefabsData prefabses;
-            if (SystemAPI.TryGetSingleton<PrefabsData>(out prefabses) && prefabses.unit != null)
+            if (SystemAPI.TryGetSingleton(out PrefabsData prefabs) && prefabs.unit != null)
             {
-                Entity unit = commandBuffer.Instantiate(prefabses.unit);
+                Entity unit = commandBuffer.Instantiate(prefabs.unit);
                 commandBuffer.SetComponent(unit, new LocalTransform()
                 {
                     Position = new float3(UnityEngine.Random.Range(-10f, 10f), 0, UnityEngine.Random.Range(-10f, 10f)),
@@ -62,20 +61,24 @@ public partial class ServerSystem : SystemBase
                 {
                     Value = unit
                 });
-                
-                commandBuffer.DestroyEntity(entity);
             }
             
             commandBuffer.DestroyEntity(entity);
         }
+        //
+        // EntityQuery prefabsDataSingletonQuery = new EntityQueryBuilder(Allocator.Temp).WithAllRW<PrefabsData>().Build(EntityManager);
+        // if (!prefabsDataSingletonQuery.HasSingleton<PrefabsData>())
+        // {
+        //     Entity prefabsDataEntity = commandBuffer.CreateEntity();
+        //     commandBuffer.AddComponent<PrefabsData>(prefabsDataEntity);
+        // }
         
         foreach (var (id, entity) in SystemAPI.Query<RefRO<NetworkId>>().WithNone<InitializedClient>().WithEntityAccess())
         {
             commandBuffer.AddComponent<InitializedClient>(entity);
-            PrefabsData prefabManager = SystemAPI.GetSingleton<PrefabsData>();
-            if (prefabManager.player != null)
+            if (SystemAPI.TryGetSingleton(out PrefabsData prefabs) && prefabs.player != null)
             {
-                Entity player = commandBuffer.Instantiate(prefabManager.player);
+                Entity player = commandBuffer.Instantiate(prefabs.player);
                 commandBuffer.SetComponent(player, new LocalTransform()
                 {
                     Position = new float3(UnityEngine.Random.Range(-10f, 10f), 0, UnityEngine.Random.Range(-10f, 10f)),

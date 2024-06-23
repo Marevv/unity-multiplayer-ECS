@@ -15,6 +15,7 @@ public class ConnectionBootStrap : ClientServerBootstrap
     public override bool Initialize(string defaultWorldName)
     {
         AutoConnectPort = 0;
-        return base.Initialize(defaultWorldName);
+        CreateLocalWorld(defaultWorldName);
+        return true;
     }
 }
