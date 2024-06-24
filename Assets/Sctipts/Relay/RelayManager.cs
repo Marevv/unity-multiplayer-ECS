@@ -43,7 +43,7 @@ public class RelayManager : MonoBehaviour
             var key = RelayHMACKey.FromByteArray(allocation.Key);
 
             string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
-
+            
             RelayServerData = new RelayServerData(ref serverEndpoint, 0, ref allocationIdBytes, ref connectionData, ref connectionData, ref key, connectionType == "dtls");
             
             Debug.Log("RelayStarted: " + joinCode);

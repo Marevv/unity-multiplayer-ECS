@@ -10,20 +10,6 @@ using UnityEngine.Serialization;
 
 public class PlayerAccounts : MonoBehaviour
 {
-    [SerializeField] private GameObject beforeLogInPanel;
-    [SerializeField] private TMP_Text nameLabelText;
-    [SerializeField] private TMP_InputField nameToChangeInputField;
-    [SerializeField] private GameObject afterLogInPanel;
-
-    private string _externalIds;
-
-    async void Awake()
-    {
-        await UnityServices.InitializeAsync();
-        PlayerAccountService.Instance.SignedIn += SignInWithUnity;
-    }
-    
-    
 
     public async void StartSignInAsync(bool anonymously)
     {
@@ -51,8 +37,6 @@ public class PlayerAccounts : MonoBehaviour
 
     private async void AfterSignIn()
     {
-        beforeLogInPanel.SetActive(false);
-        afterLogInPanel.SetActive(true);
         try
         {
             await AuthenticationService.Instance.GetPlayerNameAsync();
@@ -66,22 +50,38 @@ public class PlayerAccounts : MonoBehaviour
             Debug.LogException(ex);
         }
 
+        UiManager.Instance.MainMenuUI();
 
-        nameLabelText.text = AuthenticationService.Instance.PlayerName;
+        UiManager.Instance.PlayerName = AuthenticationService.Instance.PlayerName;
     }
 
     public async void ChangePlayerName()
     {
-        await AuthenticationService.Instance.UpdatePlayerNameAsync(nameToChangeInputField.text);
-        nameLabelText.text = AuthenticationService.Instance.PlayerName;
-        nameToChangeInputField.text = "";
+        await AuthenticationService.Instance.UpdatePlayerNameAsync(UiManager.Instance.PlayerName);
+        UiManager.Instance.PlayerName = AuthenticationService.Instance.PlayerName;
+    }
+
+    //This is just to be able to test on same PC
+    public async void Authenticate(TMP_InputField playerName)
+    {
+        InitializationOptions initializationOptions = new InitializationOptions();
+        initializationOptions.SetProfile(playerName.text);
+
+        await UnityServices.InitializeAsync(initializationOptions);
+
+        AuthenticationService.Instance.SignedIn += () =>
+        {
+            Debug.Log($"Signed in with ID: {AuthenticationService.Instance.PlayerId}");
+        };
+
+        await AuthenticationService.Instance.SignInAnonymouslyAsync();
+        AfterSignIn();
     }
 
     public void SignOut()
     {
         AuthenticationService.Instance.SignOut();
-        beforeLogInPanel.SetActive(true);
-        afterLogInPanel.SetActive(false);
+        UiManager.Instance.LogInUI();
     }
 
     async void SignInWithUnity()

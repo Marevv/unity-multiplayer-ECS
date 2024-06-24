@@ -285,6 +285,7 @@ GameObject:
   - component: {fileID: 7208691055613459717}
   - component: {fileID: 328674031133263907}
   - component: {fileID: 1114550305164304742}
+  - component: {fileID: 6714406789644040960}
   m_Layer: 5
   m_Name: LobbyListSingle
   m_TagString: Untagged
@@ -411,6 +412,32 @@ MonoBehaviour:
   lobbyNameText: {fileID: 4376805835140399006}
   playersText: {fileID: 8173291669322455805}
   gameModeText: {fileID: 8500584358244278354}
+--- !u!114 &6714406789644040960
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6576070613603912047}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Padding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 0
+    m_Bottom: 0
+  m_ChildAlignment: 4
+  m_Spacing: 0
+  m_ChildForceExpandWidth: 1
+  m_ChildForceExpandHeight: 1
+  m_ChildControlWidth: 1
+  m_ChildControlHeight: 0
+  m_ChildScaleWidth: 0
+  m_ChildScaleHeight: 0
+  m_ReverseArrangement: 0
 --- !u!1 &6888654874898853650
 GameObject:
   m_ObjectHideFlags: 0
