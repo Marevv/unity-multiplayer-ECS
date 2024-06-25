@@ -76,6 +76,7 @@ public class PlayerAccounts : MonoBehaviour
 
         await AuthenticationService.Instance.SignInAnonymouslyAsync();
         AfterSignIn();
+        
     }
 
     public void SignOut()

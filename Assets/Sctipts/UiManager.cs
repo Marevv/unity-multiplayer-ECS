@@ -22,8 +22,8 @@ public class UiManager : MonoBehaviour
     [SerializeField] private TMP_InputField addressInputField;
     [SerializeField] private TMP_InputField portInputField;
     [SerializeField] private Button joinButton;
+    [SerializeField] private Button matchMakerButton;
     private string _oldValue;
-    
 
     //private string _playerName;
 
@@ -63,6 +63,7 @@ public class UiManager : MonoBehaviour
         LogInUI();
         
         joinButton.onClick.AddListener(ConnectionManager.Instance.Connect);
+        //matchMakerButton.onClick.AddListener(MatchmakerManager.Instance.FindMatch);
     }
 
 

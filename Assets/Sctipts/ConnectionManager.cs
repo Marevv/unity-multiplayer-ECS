@@ -1,37 +1,31 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Unity.Collections;
 using UnityEngine;
 using Unity.Entities;
 using Unity.NetCode;
-using System.Net;
-using Unity.Burst;
-using Unity.Collections;
 using Unity.Networking.Transport;
-using TMPro;
 using Unity.Networking.Transport.Relay;
-using Unity.Scenes;
-using Unity.Services.Relay;
-using Unity.VisualScripting;
+using Unity.Services.Multiplay;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
-
-public enum UserType
-{
-    Server,
-    Client,
-    Host
-}
 
 public class ConnectionManager : MonoBehaviour
 {
     public static ConnectionManager Instance { get; private set; }
 
     [SerializeField] private ushort _port = 7979;
+    [SerializeField] private bool useMultiplay = false;
 
     private bool _connecting = false;
 
     private NetworkEndpoint _serverAddress;
 
+    public bool isClient = false;
+    public bool isServer = false;
+    
+    public const int MAX_PLAYER_AMOUNT = 4;
 
     public static World ServerWorld
     {
@@ -71,26 +65,19 @@ public class ConnectionManager : MonoBehaviour
     private void Awake()
     {
         Instance = this;
+        
     }
-    //
-    // private void OnEnable()
-    // {
-    //     connectButton.onClick.AddListener(SetupConnection);
-    // }
-    //
-    // private void OnDisable()
-    // {
-    //     connectButton.onClick.RemoveListener(SetupConnection);
-    // }
 
     private void Start()
     {
         if (ClientServerBootstrap.RequestedPlayType == ClientServerBootstrap.PlayType.Server)
         {
+            Camera.main.enabled = false;
             Debug.Log("Initializing Server");
-            StartCoroutine(InitializeDedicatedServer());
+            InitializeServer();
         }
     }
+
 
     public void Connect()
     {
@@ -194,40 +181,59 @@ public class ConnectionManager : MonoBehaviour
     }
 
 
-    private IEnumerator InitializeDedicatedServer()
+    private async void InitializeServer()
     {
         var server = ClientServerBootstrap.CreateServerWorld("ServerWorld");
         if (World.DefaultGameObjectInjectionWorld == null)
             World.DefaultGameObjectInjectionWorld = server;
 
         DisposeDefaultWorld();
-
-        SceneManager.LoadSceneAsync("GameScene", LoadSceneMode.Additive);
-
+        
         while (!ClientServerBootstrap.HasServerWorld)
         {
-            yield return null;
+            return;
         }
 
-        var args = Environment.GetCommandLineArgs();
-
-        for (var i = 0; i < args.Length; i++)
+        if (useMultiplay)
         {
-            if (args[i] == "-port")
-            {
-                _port = ushort.Parse(args[i + 1]);
-                Debug.Log($"Got this port from args: {_port}");
-                break;
-            }
+            Debug.Log("Using Multiplay");
+            await MultiplayManager.Instance.InitializeMultiplay();
         }
+        else
+        {
+            Debug.Log("Not using Multiplay");
+            var args = Environment.GetCommandLineArgs();
 
-        Debug.Log($"Listenning to: {NetworkEndpoint.AnyIpv4.WithPort(_port)}");
+            for (var i = 0; i < args.Length; i++)
+            {
+                if (args[i] == "-port")
+                {
+                    _port = ushort.Parse(args[i + 1]);
+                    Debug.Log($"Got this port from args: {_port}");
+                    break;
+                }
+            }
 
+
+            _serverAddress = NetworkEndpoint.AnyIpv4.WithPort(_port);
+            StartServer();
+        }
+    }
+
+    public async void StartServer()
+    {
+        if (useMultiplay)
+            _serverAddress = NetworkEndpoint.AnyIpv4.WithPort(MultiplayService.Instance.ServerConfig.Port);
+        
+        Debug.Log($"Starting Server on Address: {_serverAddress}. Using Multiplay: {useMultiplay}");
         using var query =
             ServerWorld.EntityManager.CreateEntityQuery(ComponentType.ReadWrite<NetworkStreamDriver>());
-        query.GetSingletonRW<NetworkStreamDriver>().ValueRW.Listen(NetworkEndpoint.AnyIpv4.WithPort(_port));
-
-
+        query.GetSingletonRW<NetworkStreamDriver>().ValueRW.Listen(_serverAddress);
+        
+        isServer = true;
+        
+        await SceneManager.LoadSceneAsync("GameScene", LoadSceneMode.Additive);
+        
         _connecting = false;
     }
 
@@ -252,8 +258,27 @@ public class ConnectionManager : MonoBehaviour
             ClientWorld.EntityManager.CreateEntityQuery(ComponentType.ReadWrite<NetworkStreamDriver>());
         query.GetSingletonRW<NetworkStreamDriver>().ValueRW
             .Connect(ClientWorld.EntityManager, _serverAddress);
-
+        isClient = true;
 
         _connecting = false;
+        
+        
     }
+
+    public bool HasAvailablePlayerSlots()
+    {
+        if (isServer)
+        {
+            return ServerWorld.EntityManager.CreateEntityQuery(ComponentType.ReadOnly<NetworkStreamConnection>())
+                .CalculateEntityCount() < MAX_PLAYER_AMOUNT;
+        }
+        else if (isClient)
+        {
+            return ClientWorld.EntityManager.CreateEntityQuery(ComponentType.ReadOnly<NetworkStreamConnection>())
+                .CalculateEntityCount() < MAX_PLAYER_AMOUNT;
+        }
+
+        return false;
+    }
+
 }
