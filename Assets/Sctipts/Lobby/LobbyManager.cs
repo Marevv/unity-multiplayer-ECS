@@ -18,8 +18,7 @@ public class LobbyManager : MonoBehaviour
     public const string KEY_PLAYER_CHARACTER = "Character";
     public const string KEY_GAME_MODE = "GameMode";
     public const string KEY_RELAY_CODE = "RelayCode";
-    public const string KEY_IP = "Ip";
-    public const string KEY_PORT = "Port";
+    public const string KEY_IP_PORT = "IpPort";
 
 
     public event EventHandler OnLeftLobby;
@@ -135,12 +134,12 @@ public class LobbyManager : MonoBehaviour
 
                     joinedLobby = null;
                 }
-                else if (joinedLobby.Data[KEY_IP].Value != "0" && joinedLobby.Data[KEY_PORT].Value != "0")
+                else if (joinedLobby.Data[KEY_IP_PORT].Value != "0")
                 {
                     if (!IsLobbyHost())
                     {
-                        Debug.Log($"Lobby IP: {joinedLobby.Data[KEY_IP].Value} | Lobby Port: {joinedLobby.Data[KEY_PORT].Value}");
-                        ConnectionManager.Instance.Connect(joinedLobby.Data[KEY_IP].Value, ushort.Parse(joinedLobby.Data[KEY_PORT].Value));
+                        Debug.Log($"Lobby Address: {joinedLobby.Data[KEY_IP_PORT].Value}");
+                        ConnectionManager.Instance.Connect(joinedLobby.Data[KEY_IP_PORT].Value);
                         UiManager.Instance.InGameUI();
                     }
 
@@ -201,8 +200,7 @@ public class LobbyManager : MonoBehaviour
             {
                 { KEY_GAME_MODE, new DataObject(DataObject.VisibilityOptions.Public, gameMode.ToString()) },
                 { KEY_RELAY_CODE, new DataObject(DataObject.VisibilityOptions.Member, "0") },
-                { KEY_IP, new DataObject(DataObject.VisibilityOptions.Member, "0") },
-                { KEY_PORT, new DataObject(DataObject.VisibilityOptions.Member, "0") }
+                { KEY_IP_PORT, new DataObject(DataObject.VisibilityOptions.Member, "0") }
             }
         };
 
@@ -401,7 +399,7 @@ public class LobbyManager : MonoBehaviour
                 //Dedicated Server
                 try
                 {
-                    NetworkEndpoint networkEndpoint = ConnectionManager.Instance.GetNetworkEndpoint();
+                    NetworkEndpoint networkEndpoint = UiManager.Instance.GetNetworkEndpoint();
 
                     if (networkEndpoint != NetworkEndpoint.AnyIpv4)
                     {
@@ -409,14 +407,13 @@ public class LobbyManager : MonoBehaviour
                         {
                             Data = new Dictionary<string, DataObject>
                             {
-                                { KEY_IP, new DataObject(DataObject.VisibilityOptions.Member, networkEndpoint.Address) },
-                                { KEY_PORT,new DataObject(DataObject.VisibilityOptions.Member, networkEndpoint.Port.ToString()) }
+                                { KEY_IP_PORT, new DataObject(DataObject.VisibilityOptions.Member, networkEndpoint.Address) }
                             }
                         });
 
                         joinedLobby = lobby;
 
-                        ConnectionManager.Instance.Connect();
+                        ConnectionManager.Instance.Connect(networkEndpoint.Address);
                     }
                 }
                 catch (Exception e)

@@ -24,17 +24,13 @@ public enum UserType
 
 public class ConnectionManager : MonoBehaviour
 {
-    public static ConnectionManager Instance { get; set; }
+    public static ConnectionManager Instance { get; private set; }
 
-    [SerializeField] private string _connectIP = "127.0.0.1";
     [SerializeField] private ushort _port = 7979;
-    private string _listenIP = "0.0.0.0";
-
-    public TMP_InputField ipInputField;
-    public TMP_InputField portInputField;
-    public Button connectButton;
 
     private bool _connecting = false;
+
+    private NetworkEndpoint _serverAddress;
 
 
     public static World ServerWorld
@@ -98,35 +94,20 @@ public class ConnectionManager : MonoBehaviour
 
     public void Connect()
     {
+        Connect(UiManager.Instance.GetNetworkEndpoint().Address);
+    }
+
+    public void Connect(string address)
+    {
         if (_connecting) return;
         _connecting = true;
-        
+
         Debug.Log("Connecting");
+        Debug.Log($"Before server address: {address}");
+        _serverAddress = NetworkEndpoint.Parse(address.Split(':')[0], ushort.Parse(address.Split(':')[1]));
+        Debug.Log($"Server address: {_serverAddress}");
         StartCoroutine(ConnectToDedicatedServer());
         UiManager.Instance.InGameUI();
-    }
-
-    public void Connect(string ipAddress, ushort port)
-    {
-        Debug.Log($"Before IP: {ipAddress} and port: {port}");
-        _connectIP = ipAddress;
-        _port = port;
-        Debug.Log($"After IP: {_connectIP} and port: {_port}");
-        Connect();
-    }
-
-    public NetworkEndpoint GetNetworkEndpoint()
-    {
-        if (UiManager.Instance.Address == "" || UiManager.Instance.Port == "")
-        {
-            Debug.Log("IP or Port not provided");
-            return NetworkEndpoint.AnyIpv4;
-        }
-
-        _connectIP = UiManager.Instance.Address;
-        _port = ushort.Parse(UiManager.Instance.Port);
-
-        return NetworkEndpoint.Parse(_connectIP, _port);
     }
 
 
@@ -222,7 +203,7 @@ public class ConnectionManager : MonoBehaviour
         DisposeDefaultWorld();
 
         SceneManager.LoadSceneAsync("GameScene", LoadSceneMode.Additive);
-        
+
         while (!ClientServerBootstrap.HasServerWorld)
         {
             yield return null;
@@ -240,11 +221,11 @@ public class ConnectionManager : MonoBehaviour
             }
         }
 
-        Debug.Log($"Listenning on IP: {_listenIP} and port: {_port}");
+        Debug.Log($"Listenning to: {NetworkEndpoint.AnyIpv4.WithPort(_port)}");
 
         using var query =
             ServerWorld.EntityManager.CreateEntityQuery(ComponentType.ReadWrite<NetworkStreamDriver>());
-        query.GetSingletonRW<NetworkStreamDriver>().ValueRW.Listen(NetworkEndpoint.Parse(_listenIP, _port));
+        query.GetSingletonRW<NetworkStreamDriver>().ValueRW.Listen(NetworkEndpoint.AnyIpv4.WithPort(_port));
 
 
         _connecting = false;
@@ -253,12 +234,12 @@ public class ConnectionManager : MonoBehaviour
     private IEnumerator ConnectToDedicatedServer()
     {
         var client = ClientServerBootstrap.CreateClientWorld("ClientWorld");
-        
+
         if (World.DefaultGameObjectInjectionWorld == null)
             World.DefaultGameObjectInjectionWorld = client;
 
         DisposeDefaultWorld();
-        
+
         SceneManager.LoadSceneAsync("GameScene", LoadSceneMode.Additive);
 
         while (!ClientServerBootstrap.HasClientWorlds)
@@ -266,11 +247,11 @@ public class ConnectionManager : MonoBehaviour
             yield return null;
         }
 
-        Debug.Log($"Connecting on IP: {_connectIP} and port: {_port}");
+        Debug.Log($"Connecting to: {_serverAddress}");
         using var query =
             ClientWorld.EntityManager.CreateEntityQuery(ComponentType.ReadWrite<NetworkStreamDriver>());
         query.GetSingletonRW<NetworkStreamDriver>().ValueRW
-            .Connect(ClientWorld.EntityManager, NetworkEndpoint.Parse(_connectIP, _port));
+            .Connect(ClientWorld.EntityManager, _serverAddress);
 
 
         _connecting = false;

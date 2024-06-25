@@ -1,5 +1,6 @@
 using System;
 using TMPro;
+using Unity.Networking.Transport;
 using Unity.Services.Relay;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -7,7 +8,7 @@ using UnityEngine.UI;
 
 public class UiManager : MonoBehaviour
 {
-    public static UiManager Instance { get; set; }
+    public static UiManager Instance { get; private set; }
 
     [SerializeField] private Transform logInUiPanel;
     [SerializeField] private Transform mainMenuUiPanel;
@@ -111,6 +112,17 @@ public class UiManager : MonoBehaviour
             joinButton.onClick.RemoveListener(ConnectionManager.Instance.JoinRelayWithCode);
             joinButton.onClick.AddListener(ConnectionManager.Instance.Connect);
         }
+    }
+    
+    public NetworkEndpoint GetNetworkEndpoint()
+    {
+        if (Address == string.Empty || Port == string.Empty)
+        {
+            Debug.Log("IP or Port not provided");
+            return NetworkEndpoint.AnyIpv4;
+        }
+
+        return NetworkEndpoint.Parse(Address, ushort.Parse(Port));
     }
 
     public void QuitGame()
